@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 1.3.0
+-------------
+
+- d04469a Update etos library to version 1.3.0
+- 01859dd Compress workspace after execution (#16)
+- 1a82827 Run JSONTas on step definition (#15)
+
 Version 1.2.0
 -------------
 
