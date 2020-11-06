@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 1.3.1
+-------------
+
+- 16c838f Create checkout script in workspace directory instead (#18)
+
 Version 1.3.0
 -------------
 
