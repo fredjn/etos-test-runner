@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 1.4.0
+-------------
+
+- 5ff16b3 Update etos library to version 1.4.0
+- 97ac4e5 Send artifact events (#17)
+
 Version 1.3.1
 -------------
 
