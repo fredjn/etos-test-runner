@@ -210,7 +210,9 @@ class Executor:  # pylint:disable=too-many-instance-attributes
         :rtype: :obj:`eiffellib.events.eiffel_test_case_triggered_event.EiffelTestCaseTriggeredEvent`  # pylint:disable=line-too-long
         """
         return self.etos.events.send_test_case_triggered(
-            {"id": test_name}, self.iut.artifact, links={"CONTEXT": self.context}
+            {"id": test_name},
+            self.etos.config.get("artifact"),
+            links={"CONTEXT": self.context},
         )
 
     def _started(self, test_name):
@@ -304,7 +306,7 @@ class Executor:  # pylint:disable=too-many-instance-attributes
             " ".join(self.checkout_command),
             self._checkout_tests,
             self.checkout_command,
-            workspace.workspace
+            workspace.workspace,
         ) as test_directory:
             self.report_path = test_directory.joinpath(f"logs/{self.report_path}")
             self.logger.info("Report path: %r", self.report_path)
