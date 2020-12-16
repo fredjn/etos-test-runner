@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 1.6.0
+-------------
+
+- 32f084a Update etos library to version 1.6.0
+- 747128b Artifact from config instead of non-existing attribute (#20)
+- 726285a Fix a bug with TEST_REGEX not loading properly (#19)
+
 Version 1.5.0
 -------------
 
