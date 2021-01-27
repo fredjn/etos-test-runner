@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 1.9.0
+-------------
+
+- 1f41f2f Update etos library to version 1.9.0
+- 5660391 Remove eiffellib requirement. (#21)
+
 Version 1.8.0
 -------------
 
