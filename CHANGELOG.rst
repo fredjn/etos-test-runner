@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 1.12.0
+--------------
+
+- 2ec6a0b Update etos library to version 1.12.0
+- 21a64d1 Add IUT monitoring commands for ETR (#22)
+
 Version 1.11.0
 --------------
 
