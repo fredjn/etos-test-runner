@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 1.14.0
+--------------
+
+- 078e173 Update etos library to version 1.14.0
+- 718e87e Add a dynamic timeout if there are still events being sent (#23)
+
 Version 1.13.0
 --------------
 
