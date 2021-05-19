@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 1.15.0
+--------------
+
+- 35729b2 Update etos library to version 1.15.0
+- 937b974 Collect monitoring logs before uploading them (#24)
+
 Version 1.14.0
 --------------
 
