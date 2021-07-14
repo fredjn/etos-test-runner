@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 1.19.0
+--------------
+
+- 775db40 Update etos library to version 1.19.0
+- ee22713 Send environment defined for EXECUTION_SPACE_URL if it exists (#25)
+
 Version 1.18.0
 --------------
 
