@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 1.22.0
+--------------
+
+- ffca6cc Update etos library to version 1.22.0
+
 Version 1.21.0
 --------------
 
