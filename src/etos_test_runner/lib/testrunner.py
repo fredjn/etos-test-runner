@@ -43,7 +43,7 @@ class TestRunner:
         self.config = self.etos.config.get("test_config")
 
         self.log_area = LogArea(self.etos)
-        self.iut_monitoring = IutMonitoring(self.iut)
+        self.iut_monitoring = IutMonitoring(self.iut, self.etos)
         self.issuer = {"name": "ETOS Test Runner"}
         self.etos.config.set("iut", self.iut)
         self.plugins = self.etos.config.get("plugins")

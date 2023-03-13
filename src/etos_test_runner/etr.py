@@ -26,8 +26,9 @@ import pkgutil
 from pprint import pprint
 
 from etos_lib import ETOS
+from etos_lib.logging.logger import FORMAT_CONFIG
 
-from etos_test_runner import __version__
+from etos_test_runner import VERSION
 from etos_test_runner.lib.testrunner import TestRunner
 from etos_test_runner.lib.iut import Iut
 
@@ -36,13 +37,13 @@ from etos_test_runner.lib.iut import Iut
 logging.getLogger("pika").setLevel(logging.WARNING)
 
 _LOGGER = logging.getLogger(__name__)
-LOGFORMAT = "[%(asctime)s] %(levelname)s:%(message)s"
-logging.basicConfig(
-    level=logging.DEBUG,
-    stream=sys.stdout,
-    format=LOGFORMAT,
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+# LOGFORMAT = "[%(asctime)s] %(levelname)s:%(message)s"
+# logging.basicConfig(
+#     level=logging.DEBUG,
+#     stream=sys.stdout,
+#     format=LOGFORMAT,
+#     datefmt="%Y-%m-%d %H:%M:%S",
+# )
 
 
 def parse_args(args):
@@ -56,7 +57,7 @@ def parse_args(args):
         "-v",
         "--version",
         action="version",
-        version=f"etos_test_runner {__version__}",
+        version=f"etos_test_runner {VERSION}",
     )
     return parser.parse_args(args)
 
@@ -69,6 +70,7 @@ class ETR:
     def __init__(self):
         """Initialize ETOS library and start eiffel publisher."""
         self.etos = ETOS("ETOS Test Runner", os.getenv("HOSTNAME"), "ETOS Test Runner")
+
         self.etos.config.rabbitmq_publisher_from_environment()
         # ETR will print the entire environment just before executing.
         # Hide the password.
@@ -76,6 +78,8 @@ class ETR:
 
         self.etos.start_publisher()
         self.tests_url = os.getenv("SUB_SUITE_URL")
+        self.download_and_load()
+        FORMAT_CONFIG.identifier = self.etos.config.get("suite_id")
 
         signal.signal(signal.SIGTERM, self.graceful_shutdown)
 
@@ -94,6 +98,7 @@ class ETR:
         self.etos.config.set("context", json_config.get("context"))
         self.etos.config.set("artifact", json_config.get("artifact"))
         self.etos.config.set("main_suite_id", json_config.get("test_suite_started_id"))
+        self.etos.config.set("suite_id", json_config.get("suite_id"))
 
     def _run_tests(self):
         """Run tests in ETOS test runner.
@@ -127,7 +132,7 @@ class ETR:
         :rtype: bool
         """
         _LOGGER.info("Starting ETR.")
-        self.download_and_load()
+        # self.download_and_load()
         self.load_plugins()
         try:
             activity_name = self.etos.config.get("test_config").get("name")
