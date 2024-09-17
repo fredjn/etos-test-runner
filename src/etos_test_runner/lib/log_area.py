@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Axis Communications AB.
+# Copyright Axis Communications AB.
 #
 # For a full list of individual contributors, please see the commit history.
 #
@@ -16,6 +16,7 @@
 """ETR log area handler."""
 import logging
 import traceback
+import hashlib
 import time
 from copy import deepcopy
 from pathlib import Path
@@ -25,6 +26,7 @@ from json.decoder import JSONDecodeError
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from requests.exceptions import HTTPError
 from urllib3.exceptions import MaxRetryError, NewConnectionError
+from etos_test_runner.lib.events import EventPublisher
 
 
 class LogArea:
@@ -39,6 +41,8 @@ class LogArea:
         :type etos: :obj:`etos_lib.etos.Etos`
         """
         self.etos = etos
+        self.event_publisher = EventPublisher(etos)
+        self.identifier = self.etos.config.get("suite_id")
         self.suite_name = self.etos.config.get("test_config").get("name").replace(" ", "-")
         self.log_area = self.etos.config.get("test_config").get("log_area")
         self.logs = []
@@ -130,13 +134,23 @@ class LogArea:
         :type logs: list
         """
         for log in logs:
-            log["uri"] = self.__upload(
+            log["uri"], log["checksums"] = self.__upload(
                 self.etos.config.get("context"),
                 log["file"],
                 log["name"],
                 self.etos.config.get("main_suite_id"),
                 self.etos.config.get("sub_suite_id"),
             )
+            event = {
+                "event": "report",
+                "data": {
+                    "url": log["uri"],
+                    "name": log["name"],
+                    "checksums": log["checksums"],
+                },
+            }
+            self.logger.info("Sending event:      %r", event)
+            self.event_publisher.publish(event)
             self.logs.append(log)
             log["file"].unlink()
 
@@ -196,13 +210,24 @@ class LogArea:
         artifact_created = self._artifact_created(artifacts)
 
         for artifact in artifacts:
-            artifact["uri"] = self.__upload(
+            artifact["uri"], artifact["checksums"] = self.__upload(
                 self.etos.config.get("context"),
                 artifact["file"],
                 artifact["name"],
                 self.etos.config.get("main_suite_id"),
                 self.etos.config.get("sub_suite_id"),
             )
+            event = {
+                "event": "artifact",
+                "data": {
+                    "url": artifact["uri"],
+                    "name": artifact["name"],
+                    "directory": self.suite_name,
+                    "checksums": artifact["checksums"],
+                },
+            }
+            self.logger.info("Sending event:      %r", event)
+            self.event_publisher.publish(event)
             self.artifacts.append(artifact)
             artifact["file"].unlink()
 
@@ -253,9 +278,12 @@ class LogArea:
         if upload.get("auth"):
             upload["auth"] = self.__auth(**upload["auth"])
 
+        checksums = {}
         with open(log, "rb") as log_file:
+            content = log_file.read()
+            checksums["SHA-256"] = hashlib.sha256(content).hexdigest()
             for _ in range(3):
-                request_generator = self.__retry_upload(log_file=log_file, **upload)
+                request_generator = self.__retry_upload(file_contents=content, **upload)
                 try:
                     for response in request_generator:
                         self.logger.debug("%r", response)
@@ -264,16 +292,17 @@ class LogArea:
                         self.logger.info("Uploaded log %r.", log)
                         self.logger.info("Upload URI          %r", upload["url"])
                         self.logger.info("Data:               %r", data)
+                        self.logger.info("Checksum(sha256):   %r", checksums["SHA-256"])
                         break
                     break
                 except:  # noqa pylint:disable=bare-except
                     self.logger.error("%r", traceback.format_exc())
                     self.logger.error("Failed to upload log!")
                     self.logger.error("Attempted upload of %r", log)
-        return upload["url"]
+        return upload["url"], checksums
 
     def __retry_upload(
-        self, verb, url, log_file, timeout=None, as_json=True, **requests_kwargs
+        self, verb, url, file_contents, timeout=None, as_json=True, **requests_kwargs
     ):  # pylint:disable=too-many-arguments
         """Attempt to connect to url for x time.
 
@@ -282,8 +311,8 @@ class LogArea:
         :type verb: str
         :param url: URL to retry upload request
         :type url: str
-        :param log_file: Opened log file to upload.
-        :type log_file: file
+        :param file_contents: File contents to upload
+        :type file_contents: bytes
         :param timeout: How long, in seconds, to retry request.
         :type timeout: int or None
         :param as_json: Whether or not to return json instead of response.
@@ -302,11 +331,8 @@ class LogArea:
             iteration += 1
             self.logger.debug("Iteration: %d", iteration)
             try:
-                # Seek back to the start of the file so that the uploaded file
-                # is not 0 bytes in size.
-                log_file.seek(0)
                 request = getattr(self.etos.http, verb.lower())
-                response = request(url, data=log_file, **requests_kwargs)
+                response = request(url, data=file_contents, **requests_kwargs)
                 if as_json:
                     yield response.json()
                 else:
